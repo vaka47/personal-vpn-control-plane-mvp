@@ -4,6 +4,7 @@ import argparse
 import json
 from pathlib import Path
 
+from .api_server import main as serve_api
 from .models import Platform
 from .profile_generator import ProfileGenerator, ProfileRequest
 from .pki import DevPki
@@ -143,6 +144,25 @@ def cmd_render_server_config(args: argparse.Namespace) -> None:
         print(notes)
 
 
+def cmd_serve(args: argparse.Namespace) -> None:
+    serve_api(
+        [
+            "--host",
+            args.host,
+            "--port",
+            str(args.port),
+            "--state",
+            args.state,
+            "--packages",
+            args.packages,
+            "--pki",
+            args.pki,
+            "--web-root",
+            args.web_root,
+        ]
+    )
+
+
 def add_common(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--state", default=str(DEFAULT_STATE))
     parser.add_argument("--packages", default=str(DEFAULT_PACKAGES))
@@ -208,10 +228,15 @@ def main() -> None:
     server_config.add_argument("--output")
     server_config.set_defaults(func=cmd_render_server_config)
 
+    serve = sub.add_parser("serve")
+    serve.add_argument("--host", default="127.0.0.1")
+    serve.add_argument("--port", type=int, default=8080)
+    serve.add_argument("--web-root", default="web_app")
+    serve.set_defaults(func=cmd_serve)
+
     args = parser.parse_args()
     args.func(args)
 
 
 if __name__ == "__main__":
     main()
-

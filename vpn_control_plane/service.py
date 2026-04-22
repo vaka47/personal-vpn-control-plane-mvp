@@ -150,6 +150,22 @@ class ControlPlaneService:
             "expires_at": invite.expires_at,
         }
 
+    def resolve_invite(self, *, token: str) -> Dict[str, Any]:
+        state = self.store.load()
+        invite = self._find_invite_by_token(state, token)
+        customer_id = invite["customer_id"]
+        free_slots = [
+            row
+            for row in state["device_slots"]
+            if row["customer_id"] == customer_id and row["status"] == SlotStatus.FREE.value
+        ]
+        return {
+            "status": invite["status"],
+            "expires_at": invite["expires_at"],
+            "customer_id": customer_id,
+            "free_slots": len(free_slots),
+        }
+
     def activate_invite(
         self,
         *,
@@ -278,6 +294,38 @@ class ControlPlaneService:
             if row["customer_id"] == customer_id
         ]
 
+    def get_customer_dashboard(self, *, customer_id: str) -> Dict[str, Any]:
+        state = self.store.load()
+        customer = self._require_customer(state, customer_id)
+        server = self._server_for_customer(state, customer_id)
+        slots = self.list_slots(customer_id=customer_id)
+        invites = [
+            row
+            for row in state["invite_tokens"]
+            if row["customer_id"] == customer_id
+        ]
+        audit = [
+            row
+            for row in state["audit_log"]
+            if row.get("target_id") == customer_id
+            or row.get("payload", {}).get("identity", "").startswith(customer_id)
+            or row.get("target_type") in {"slot", "invite", "server"}
+        ][-20:]
+        return {
+            "customer": customer,
+            "server": server,
+            "slots": sorted(slots, key=lambda row: row["slot_number"]),
+            "invites": invites[-10:],
+            "audit": audit,
+            "summary": {
+                "slot_limit": len(slots),
+                "active_slots": len([slot for slot in slots if slot["status"] == SlotStatus.ACTIVE.value]),
+                "free_slots": len([slot for slot in slots if slot["status"] == SlotStatus.FREE.value]),
+                "revoked_slots": len([slot for slot in slots if slot["status"] == SlotStatus.REVOKED.value]),
+                "duplicate_attempts": sum(int(slot.get("duplicate_attempts", 0)) for slot in slots),
+            },
+        }
+
     @staticmethod
     def hash_token(token: str) -> str:
         return hashlib.sha256(token.encode("utf-8")).hexdigest()
@@ -330,4 +378,3 @@ class ControlPlaneService:
         if not row:
             raise ControlPlaneError(f"{collection} row not found: {row_id}")
         return row
-

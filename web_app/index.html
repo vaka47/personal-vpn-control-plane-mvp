@@ -1,0 +1,495 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Personal VPN Dashboard</title>
+  <style>
+    :root {
+      --ink: #172027;
+      --muted: #65717d;
+      --paper: #f5efe4;
+      --card: #fffaf1;
+      --line: rgba(23, 32, 39, 0.14);
+      --blue: #115f7a;
+      --green: #2d6143;
+      --orange: #d86f30;
+      --red: #b6453b;
+      --shadow: 0 24px 70px rgba(42, 53, 61, 0.16);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 10% 10%, rgba(216, 111, 48, 0.18), transparent 28rem),
+        radial-gradient(circle at 78% 0%, rgba(17, 95, 122, 0.16), transparent 32rem),
+        linear-gradient(135deg, #f5efe4 0%, #eaf2ed 100%);
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    .shell {
+      width: min(1240px, calc(100% - 28px));
+      margin: 0 auto;
+      padding: 28px 0 44px;
+    }
+
+    header {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 18px;
+      margin-bottom: 18px;
+    }
+
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      background: rgba(255, 250, 241, 0.86);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(16px);
+    }
+
+    .hero {
+      padding: 30px;
+    }
+
+    .eyebrow {
+      color: var(--orange);
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 12px 0;
+      max-width: 730px;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(38px, 6vw, 66px);
+      line-height: 0.92;
+      letter-spacing: -0.055em;
+    }
+
+    .lead {
+      max-width: 650px;
+      color: var(--muted);
+      font-size: 17px;
+      line-height: 1.55;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      padding: 16px;
+    }
+
+    .stat {
+      min-height: 126px;
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      background: rgba(255, 255, 255, 0.62);
+    }
+
+    .stat strong {
+      display: block;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 42px;
+      line-height: 1;
+      letter-spacing: -0.05em;
+    }
+
+    .stat span {
+      display: block;
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 360px;
+      gap: 18px;
+    }
+
+    .panel {
+      padding: 22px;
+    }
+
+    .panel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+
+    h2 {
+      margin: 0;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 34px;
+      line-height: 1;
+      letter-spacing: -0.04em;
+    }
+
+    button,
+    select,
+    input {
+      min-height: 42px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: white;
+      color: var(--ink);
+      font: inherit;
+    }
+
+    button {
+      padding: 0 15px;
+      border-color: transparent;
+      background: var(--blue);
+      color: white;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    button.secondary {
+      border-color: var(--line);
+      background: white;
+      color: var(--ink);
+    }
+
+    button.danger {
+      background: var(--red);
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.55;
+    }
+
+    input,
+    select {
+      width: 100%;
+      padding: 0 12px;
+    }
+
+    .slots {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .slot {
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.68);
+    }
+
+    .slot-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .status {
+      padding: 6px 9px;
+      border-radius: 999px;
+      background: #eaf3ee;
+      color: var(--green);
+      font-size: 11px;
+      font-weight: 900;
+    }
+
+    .status.free {
+      background: #eef3f5;
+      color: var(--blue);
+    }
+
+    .status.revoked {
+      background: #fae8e5;
+      color: var(--red);
+    }
+
+    .slot strong {
+      display: block;
+      margin-top: 12px;
+    }
+
+    .slot small {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      line-height: 1.35;
+    }
+
+    .side-stack {
+      display: grid;
+      gap: 18px;
+    }
+
+    .form {
+      display: grid;
+      gap: 10px;
+    }
+
+    .invite-box,
+    .result-box {
+      padding: 12px;
+      border: 1px dashed rgba(17, 95, 122, 0.35);
+      border-radius: 16px;
+      background: rgba(17, 95, 122, 0.07);
+      word-break: break-all;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .result-box {
+      border-color: rgba(45, 97, 67, 0.35);
+      background: rgba(45, 97, 67, 0.08);
+    }
+
+    .audit {
+      display: grid;
+      gap: 8px;
+      max-height: 360px;
+      overflow: auto;
+    }
+
+    .event {
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.65);
+      font-size: 13px;
+    }
+
+    .event small {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+    }
+
+    .toast {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      max-width: min(420px, calc(100% - 36px));
+      padding: 14px 16px;
+      border-radius: 18px;
+      background: #172027;
+      color: white;
+      box-shadow: var(--shadow);
+      opacity: 0;
+      transform: translateY(12px);
+      transition: 180ms ease;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    @media (max-width: 980px) {
+      header,
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 650px) {
+      .slots,
+      .stats {
+        grid-template-columns: 1fr;
+      }
+
+      .hero,
+      .panel {
+        padding: 18px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header>
+      <section class="card hero">
+        <div class="eyebrow">Live local dashboard</div>
+        <h1>Personal VPN Control Plane</h1>
+        <p class="lead">
+          Это локальная панель, подключенная к Python API. Можно создать invite,
+          активировать устройство, получить пакет профиля и отозвать слот.
+        </p>
+      </section>
+      <section class="card stats">
+        <div class="stat"><strong id="activeSlots">0</strong><span>активных устройств</span></div>
+        <div class="stat"><strong id="freeSlots">0</strong><span>свободных слотов</span></div>
+        <div class="stat"><strong id="revokedSlots">0</strong><span>отозванных слотов</span></div>
+        <div class="stat"><strong id="duplicateAttempts">0</strong><span>duplicate attempts</span></div>
+      </section>
+    </header>
+
+    <section class="grid">
+      <div class="card panel">
+        <div class="panel-head">
+          <div>
+            <div class="eyebrow" id="serverMeta">loading</div>
+            <h2>Device slots</h2>
+          </div>
+          <button class="secondary" id="refresh">Refresh</button>
+        </div>
+        <div class="slots" id="slots"></div>
+      </div>
+
+      <aside class="side-stack">
+        <section class="card panel">
+          <div class="panel-head">
+            <h2>Invite</h2>
+          </div>
+          <div class="form">
+            <button id="createInvite">Create one-time invite</button>
+            <div class="invite-box" id="inviteBox">No invite yet.</div>
+            <input id="deviceName" value="Friend iPhone" placeholder="Device name">
+            <select id="platform">
+              <option value="apple">Apple .mobileconfig</option>
+              <option value="android">Android .sswan</option>
+              <option value="windows">Windows package</option>
+            </select>
+            <button id="activateInvite">Activate invite and generate package</button>
+            <div class="result-box" id="resultBox">Package result will appear here.</div>
+          </div>
+        </section>
+
+        <section class="card panel">
+          <div class="panel-head">
+            <h2>Audit</h2>
+          </div>
+          <div class="audit" id="audit"></div>
+        </section>
+      </aside>
+    </section>
+  </main>
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const customerId = 'demo-customer';
+    let currentInviteToken = null;
+
+    const $ = (id) => document.getElementById(id);
+
+    function toast(message) {
+      const box = $('toast');
+      box.textContent = message;
+      box.classList.add('show');
+      setTimeout(() => box.classList.remove('show'), 2800);
+    }
+
+    async function api(path, options = {}) {
+      const response = await fetch(path, {
+        headers: {'Content-Type': 'application/json'},
+        ...options
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || 'Request failed');
+      }
+      return data;
+    }
+
+    function renderSlots(slots) {
+      $('slots').innerHTML = slots.map((slot) => {
+        const statusClass = slot.status === 'FREE' ? 'free' : slot.status === 'REVOKED' ? 'revoked' : '';
+        const title = slot.device_name || `Slot ${slot.slot_number}`;
+        const meta = slot.identity || 'not activated';
+        const platform = slot.platform || 'empty';
+        const revoke = slot.status === 'ACTIVE'
+          ? `<button class="danger" data-revoke="${slot.id}">Revoke</button>`
+          : '';
+        return `
+          <article class="slot">
+            <div class="slot-top">
+              <span>#${String(slot.slot_number).padStart(2, '0')}</span>
+              <span class="status ${statusClass}">${slot.status}</span>
+            </div>
+            <strong>${title}</strong>
+            <small>${platform} · ${meta}</small>
+            <small>duplicate attempts: ${slot.duplicate_attempts || 0}</small>
+            <div style="margin-top: 12px">${revoke}</div>
+          </article>
+        `;
+      }).join('');
+      document.querySelectorAll('[data-revoke]').forEach((button) => {
+        button.addEventListener('click', async () => {
+          await api(`/api/slots/${button.dataset.revoke}/revoke`, {method: 'POST', body: '{}'});
+          toast('Slot revoked');
+          await loadDashboard();
+        });
+      });
+    }
+
+    function renderAudit(events) {
+      $('audit').innerHTML = [...events].reverse().map((event) => `
+        <div class="event">
+          <strong>${event.action}</strong>
+          <small>${event.created_at}</small>
+        </div>
+      `).join('') || '<div class="event">No events yet.</div>';
+    }
+
+    async function loadDashboard() {
+      const data = await api(`/api/dashboard?customer_id=${customerId}`);
+      $('activeSlots').textContent = data.summary.active_slots;
+      $('freeSlots').textContent = data.summary.free_slots;
+      $('revokedSlots').textContent = data.summary.revoked_slots;
+      $('duplicateAttempts').textContent = data.summary.duplicate_attempts;
+      $('serverMeta').textContent = `${data.server.fqdn} · ${data.server.region} · ${data.server.status}`;
+      renderSlots(data.slots);
+      renderAudit(data.audit);
+    }
+
+    $('refresh').addEventListener('click', loadDashboard);
+
+    $('createInvite').addEventListener('click', async () => {
+      const invite = await api(`/api/customers/${customerId}/invites`, {
+        method: 'POST',
+        body: JSON.stringify({ttl_hours: 24})
+      });
+      currentInviteToken = invite.token;
+      $('inviteBox').textContent = `Token: ${invite.token}\nExpires: ${invite.expires_at}`;
+      toast('Invite created');
+      await loadDashboard();
+    });
+
+    $('activateInvite').addEventListener('click', async () => {
+      if (!currentInviteToken) {
+        toast('Create invite first');
+        return;
+      }
+      const result = await api(`/api/invites/${encodeURIComponent(currentInviteToken)}/activate`, {
+        method: 'POST',
+        body: JSON.stringify({
+          platform: $('platform').value,
+          device_name: $('deviceName').value
+        })
+      });
+      $('resultBox').textContent = JSON.stringify(result, null, 2);
+      currentInviteToken = null;
+      toast('Profile package generated');
+      await loadDashboard();
+    });
+
+    loadDashboard().catch((error) => toast(error.message));
+  </script>
+</body>
+</html>
+

@@ -1,0 +1,52 @@
+---
+- name: Provision personal VPN server
+  hosts: vpn_servers
+  become: true
+  vars:
+    dry_run: true
+  tasks:
+    - name: Show provisioning plan
+      ansible.builtin.debug:
+        msg:
+          - "customer={{ vpn_customer_id }}"
+          - "fqdn={{ vpn_server_fqdn }}"
+          - "pool={{ vpn_pool }}"
+          - "dry_run={{ dry_run }}"
+
+    - name: Install strongSwan packages
+      ansible.builtin.apt:
+        name:
+          - strongswan
+          - strongswan-pki
+          - swanctl
+          - iptables-persistent
+        state: present
+        update_cache: true
+      when: not dry_run
+
+    - name: Render swanctl.conf
+      ansible.builtin.template:
+        src: templates/swanctl.conf.j2
+        dest: /etc/swanctl/swanctl.conf
+        owner: root
+        group: root
+        mode: "0600"
+      when: not dry_run
+
+    - name: Enable IPv4 forwarding
+      ansible.builtin.copy:
+        dest: /etc/sysctl.d/99-personal-vpn.conf
+        content: |
+          net.ipv4.ip_forward=1
+          net.ipv4.conf.all.accept_redirects=0
+          net.ipv4.conf.all.send_redirects=0
+        owner: root
+        group: root
+        mode: "0644"
+      when: not dry_run
+
+    - name: Dry-run summary
+      ansible.builtin.debug:
+        msg: "Dry-run complete. Set dry_run=false to apply on a real server."
+      when: dry_run
+

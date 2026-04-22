@@ -25,6 +25,25 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthResponse"
+  /api/dashboard:
+    get:
+      tags: [Customer]
+      summary: Local dashboard aggregate endpoint
+      operationId: getDashboard
+      parameters:
+        - name: customer_id
+          in: query
+          required: false
+          schema:
+            type: string
+            default: demo-customer
+      responses:
+        "200":
+          description: Dashboard state
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Dashboard"
   /me:
     get:
       tags: [Customer]
@@ -360,4 +379,36 @@ components:
       properties:
         error:
           type: string
-
+    Dashboard:
+      type: object
+      required: [customer, server, slots, invites, audit, summary]
+      properties:
+        customer:
+          $ref: "#/components/schemas/Customer"
+        server:
+          $ref: "#/components/schemas/Server"
+        slots:
+          type: array
+          items:
+            $ref: "#/components/schemas/DeviceSlot"
+        invites:
+          type: array
+          items:
+            $ref: "#/components/schemas/InviteDetails"
+        audit:
+          type: array
+          items:
+            type: object
+        summary:
+          type: object
+          properties:
+            slot_limit:
+              type: integer
+            active_slots:
+              type: integer
+            free_slots:
+              type: integer
+            revoked_slots:
+              type: integer
+            duplicate_attempts:
+              type: integer

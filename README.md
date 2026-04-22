@@ -22,6 +22,11 @@
 - Static product demo в `web_demo/`.
 - OpenAPI-контракт для будущего backend API.
 - ADR-документы с ключевыми архитектурными решениями.
+- Локальный API server и browser dashboard без внешних зависимостей.
+- PostgreSQL migrations для production-схемы.
+- Ansible и bootstrap dry-run для будущего strongSwan-сервера.
+
+![Dashboard screenshot](docs/assets/dashboard.png)
 
 ## Документы
 
@@ -32,6 +37,8 @@
 - [MVP scope](docs/mvp_scope.md)
 - [OpenAPI](docs/api/openapi.yaml)
 - [Roadmap](docs/roadmap.md)
+- [Local API dashboard](docs/local_api.md)
+- [Provisioning dry-run](docs/provisioning.md)
 - [ADR: Dedicated server per customer](docs/adr/0001-dedicated-server-per-customer.md)
 - [ADR: Device slots and one-time invites](docs/adr/0002-device-slots-and-one-time-invites.md)
 - [ADR: IKEv2/strongSwan for Apple-first MVP](docs/adr/0003-ikev2-strongswan-over-wireguard-for-apple-first-mvp.md)
@@ -45,6 +52,28 @@ open web_demo/index.html
 ```
 
 GitHub Pages workflow лежит в `.github/workflows/pages.yml`. Публикация запускается вручную после включения Pages в настройках репозитория. Инструкция: [docs/pages.md](docs/pages.md).
+
+## Local API dashboard
+
+Запустить локальную панель, подключенную к API:
+
+```bash
+make serve
+```
+
+Открыть:
+
+```text
+http://127.0.0.1:8080
+```
+
+Что можно сделать в браузере:
+
+- увидеть demo customer и сервер;
+- создать одноразовую invite-ссылку;
+- активировать invite как Apple, Android или Windows устройство;
+- получить путь к сгенерированному пакету;
+- отозвать активный слот.
 
 ## Быстрый старт
 
@@ -105,6 +134,12 @@ make profile-android
 make profile-windows
 ```
 
+Проверить provisioning dry-run:
+
+```bash
+make provision-dry-run
+```
+
 ## Принцип анти-шаринга
 
 Один профиль нельзя сделать физически “некопируемым”, потому что `.mobileconfig`, `.sswan` и `PFX` являются файлами. Поэтому контроль делается на уровне identity:
@@ -119,9 +154,11 @@ make profile-windows
 ```text
 docs/                  ТЗ и проектная документация
 web_demo/              Static product demo
+web_app/               API-connected dashboard
 vpn_control_plane/      Python MVP ядро
 tests/                 Unit tests
 scripts/               Demo scripts
 tools/                 Генератор PDF/HTML из Markdown
+infra/                 PostgreSQL migrations and provisioning dry-run
 .github/workflows/     CI
 ```

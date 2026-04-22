@@ -1,10 +1,13 @@
-.PHONY: test demo server-config profile-apple profile-android profile-windows clean-demo
+.PHONY: test demo serve server-config profile-apple profile-android profile-windows provision-dry-run clean-demo
 
 test:
 	python3 -m unittest discover -s tests
 
 demo:
 	./scripts/demo.sh
+
+serve:
+	python3 -m vpn_control_plane.cli serve --port 8080
 
 server-config:
 	python3 -m vpn_control_plane.cli render-server-config \
@@ -36,6 +39,8 @@ profile-windows:
 		--server-fqdn vpn-demo.example.com \
 		--device-name "Demo Windows"
 
+provision-dry-run:
+	DRY_RUN=1 scripts/bootstrap_strongswan.sh
+
 clean-demo:
 	rm -rf data dist
-
