@@ -44,7 +44,7 @@
 open web_demo/index.html
 ```
 
-GitHub Pages workflow лежит в `.github/workflows/pages.yml`. После включения Pages в настройках репозитория демо можно публиковать как статический сайт.
+GitHub Pages workflow лежит в `.github/workflows/pages.yml`. Публикация запускается вручную после включения Pages в настройках репозитория. Инструкция: [docs/pages.md](docs/pages.md).
 
 ## Быстрый старт
 
