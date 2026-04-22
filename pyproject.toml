@@ -1,0 +1,9 @@
+[project]
+name = "personal-vpn-control-plane"
+version = "0.1.0"
+description = "Portfolio MVP for a personal VPN service control plane"
+requires-python = ">=3.9"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
