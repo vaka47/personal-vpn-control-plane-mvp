@@ -19,6 +19,9 @@
 - Генерация примера `swanctl.conf` для strongSwan с `unique = keep`.
 - Unit tests на invite-flow, лимиты, revoke и генерацию профилей.
 - GitHub Actions workflow для тестов.
+- Static product demo в `web_demo/`.
+- OpenAPI-контракт для будущего backend API.
+- ADR-документы с ключевыми архитектурными решениями.
 
 ## Документы
 
@@ -27,6 +30,21 @@
 - [Архитектура](docs/architecture.md)
 - [Безопасность](docs/security.md)
 - [MVP scope](docs/mvp_scope.md)
+- [OpenAPI](docs/api/openapi.yaml)
+- [Roadmap](docs/roadmap.md)
+- [ADR: Dedicated server per customer](docs/adr/0001-dedicated-server-per-customer.md)
+- [ADR: Device slots and one-time invites](docs/adr/0002-device-slots-and-one-time-invites.md)
+- [ADR: IKEv2/strongSwan for Apple-first MVP](docs/adr/0003-ikev2-strongswan-over-wireguard-for-apple-first-mvp.md)
+
+## Static demo
+
+Локально открыть:
+
+```bash
+open web_demo/index.html
+```
+
+GitHub Pages workflow лежит в `.github/workflows/pages.yml`. После включения Pages в настройках репозитория демо можно публиковать как статический сайт.
 
 ## Быстрый старт
 
@@ -38,7 +56,7 @@
 Проверить тесты:
 
 ```bash
-python3 -m unittest discover -s tests
+make test
 ```
 
 Создать demo-state:
@@ -76,9 +94,15 @@ python3 -m vpn_control_plane.cli generate-profile \
 Сгенерировать server config для strongSwan:
 
 ```bash
-python3 -m vpn_control_plane.cli render-server-config \
-  --customer-id demo-customer \
-  --server-fqdn vpn-demo.example.com
+make server-config
+```
+
+Сгенерировать демо-пакеты:
+
+```bash
+make profile-apple
+make profile-android
+make profile-windows
 ```
 
 ## Принцип анти-шаринга
@@ -94,10 +118,10 @@ python3 -m vpn_control_plane.cli render-server-config \
 
 ```text
 docs/                  ТЗ и проектная документация
+web_demo/              Static product demo
 vpn_control_plane/      Python MVP ядро
 tests/                 Unit tests
 scripts/               Demo scripts
 tools/                 Генератор PDF/HTML из Markdown
 .github/workflows/     CI
 ```
-

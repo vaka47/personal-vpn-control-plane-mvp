@@ -1,0 +1,363 @@
+openapi: 3.1.0
+info:
+  title: Personal VPN Control Plane API
+  version: 0.1.0
+  description: API contract for the MVP control plane.
+servers:
+  - url: https://api.example.com
+    description: Production placeholder
+  - url: http://localhost:8000
+    description: Local development
+tags:
+  - name: Customer
+  - name: Invites
+  - name: Slots
+  - name: Admin
+paths:
+  /health:
+    get:
+      summary: Health check
+      operationId: getHealth
+      responses:
+        "200":
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+  /me:
+    get:
+      tags: [Customer]
+      summary: Get current customer account
+      operationId: getMe
+      responses:
+        "200":
+          description: Customer account
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Customer"
+  /me/server:
+    get:
+      tags: [Customer]
+      summary: Get dedicated VPN server
+      operationId: getMyServer
+      responses:
+        "200":
+          description: Server details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Server"
+  /me/slots:
+    get:
+      tags: [Slots]
+      summary: List device slots
+      operationId: listMySlots
+      responses:
+        "200":
+          description: Device slots
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DeviceSlot"
+  /me/invites:
+    post:
+      tags: [Invites]
+      summary: Create one-time invite link
+      operationId: createInvite
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateInviteRequest"
+      responses:
+        "201":
+          description: Invite created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InviteCreated"
+        "409":
+          description: No free device slots
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /invite/{token}:
+    get:
+      tags: [Invites]
+      summary: Resolve invite token
+      operationId: resolveInvite
+      parameters:
+        - $ref: "#/components/parameters/InviteToken"
+      responses:
+        "200":
+          description: Invite details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InviteDetails"
+        "404":
+          description: Invite not found
+  /invite/{token}/activate:
+    post:
+      tags: [Invites]
+      summary: Activate invite and generate VPN package
+      operationId: activateInvite
+      parameters:
+        - $ref: "#/components/parameters/InviteToken"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ActivateInviteRequest"
+      responses:
+        "201":
+          description: Package generated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActivationResult"
+        "409":
+          description: Invite already used, expired, or slot limit reached
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /me/slots/{slotId}/revoke:
+    post:
+      tags: [Slots]
+      summary: Revoke one device slot
+      operationId: revokeSlot
+      parameters:
+        - $ref: "#/components/parameters/SlotId"
+      responses:
+        "200":
+          description: Slot revoked
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeviceSlot"
+  /admin/customers:
+    post:
+      tags: [Admin]
+      summary: Create customer
+      operationId: adminCreateCustomer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCustomerRequest"
+      responses:
+        "201":
+          description: Customer created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Customer"
+  /admin/customers/{customerId}/server:
+    post:
+      tags: [Admin]
+      summary: Attach dedicated server to customer
+      operationId: adminCreateServer
+      parameters:
+        - $ref: "#/components/parameters/CustomerId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateServerRequest"
+      responses:
+        "201":
+          description: Server created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Server"
+components:
+  parameters:
+    InviteToken:
+      name: token
+      in: path
+      required: true
+      schema:
+        type: string
+    CustomerId:
+      name: customerId
+      in: path
+      required: true
+      schema:
+        type: string
+    SlotId:
+      name: slotId
+      in: path
+      required: true
+      schema:
+        type: string
+  schemas:
+    HealthResponse:
+      type: object
+      required: [ok]
+      properties:
+        ok:
+          type: boolean
+    Customer:
+      type: object
+      required: [id, name, status]
+      properties:
+        id:
+          type: string
+          example: demo-customer
+        name:
+          type: string
+          example: Demo Customer
+        contact:
+          type: string
+          example: "@demo"
+        status:
+          type: string
+          enum: [ACTIVE, BLOCKED]
+    Server:
+      type: object
+      required: [id, customer_id, fqdn, status]
+      properties:
+        id:
+          type: string
+        customer_id:
+          type: string
+        fqdn:
+          type: string
+          example: vpn-demo.example.com
+        provider:
+          type: string
+          example: VDSina
+        region:
+          type: string
+          example: Amsterdam
+        ip:
+          type: string
+          example: 203.0.113.10
+        status:
+          type: string
+          enum: [PROVISIONING, ACTIVE, ERROR, SUSPENDED]
+    DeviceSlot:
+      type: object
+      required: [id, customer_id, slot_number, status]
+      properties:
+        id:
+          type: string
+        customer_id:
+          type: string
+        slot_number:
+          type: integer
+          minimum: 1
+          maximum: 20
+        status:
+          type: string
+          enum: [FREE, RESERVED, ACTIVE, REVOKED]
+        platform:
+          type: string
+          enum: [apple, android, windows]
+        device_name:
+          type: string
+        identity:
+          type: string
+          example: demo-customer-d01
+        duplicate_attempts:
+          type: integer
+    CreateInviteRequest:
+      type: object
+      properties:
+        ttl_hours:
+          type: integer
+          default: 24
+    InviteCreated:
+      type: object
+      required: [invite_id, token, expires_at]
+      properties:
+        invite_id:
+          type: string
+        token:
+          type: string
+        expires_at:
+          type: string
+          format: date-time
+    InviteDetails:
+      type: object
+      required: [status, expires_at, free_slots]
+      properties:
+        status:
+          type: string
+          enum: [CREATED, USED, EXPIRED, REVOKED]
+        expires_at:
+          type: string
+          format: date-time
+        free_slots:
+          type: integer
+    ActivateInviteRequest:
+      type: object
+      required: [platform, device_name]
+      properties:
+        platform:
+          type: string
+          enum: [apple, android, windows]
+        device_name:
+          type: string
+          example: Vaka iPhone
+    ActivationResult:
+      type: object
+      required: [slot_id, identity, package_path, serial, fingerprint]
+      properties:
+        slot_id:
+          type: string
+        slot_number:
+          type: integer
+        identity:
+          type: string
+        package_path:
+          type: string
+        serial:
+          type: string
+        fingerprint:
+          type: string
+    CreateCustomerRequest:
+      type: object
+      required: [id, name]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        contact:
+          type: string
+    CreateServerRequest:
+      type: object
+      required: [fqdn]
+      properties:
+        fqdn:
+          type: string
+        ip:
+          type: string
+        provider:
+          type: string
+          default: VDSina
+        region:
+          type: string
+          default: Amsterdam
+        slot_limit:
+          type: integer
+          default: 20
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+
